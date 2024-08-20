@@ -1,0 +1,113 @@
+{
+  "name": "mobio-fuzzy-search",
+  "displayName": "Mobio Fuzzy Search",
+  "description": "Fuzzy search extension for Visual Studio Code",
+  "version": "0.0.1",
+  "icon": "images/mobio.png",
+  "publisher": "boivn",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "fuzzy search",
+    "fuzzy",
+    "search",
+    "mobio"
+  ],
+  "activationEvents": [
+    "onCommand:fuzzySearch.activeTextEditor",
+    "onCommand:fuzzySearch.activeTextEditorWithCurrentSelection"
+  ],
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "fuzzySearch.searchContentSelection",
+        "title": "Fuzzy search lines content selection",
+        "category": "Fuzzy search"
+      },
+      {
+        "command": "fuzzySearch.searchContent",
+        "title": "Fuzzy search lines content",
+        "category": "Fuzzy search"
+      },
+      {
+        "command": "fuzzySearch.searchFiles",
+        "title": "Fuzzy search files",
+        "category": "Fuzzy search"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "fuzzySearch.searchContent",
+        "title": "Fuzzy search lines content",
+        "key": "shift+alt+l"
+      },
+      {
+        "command": "fuzzySearch.searchFiles",
+        "title": "Fuzzy search files",
+        "key": "shift+alt+k"
+      }
+    ],
+    "activationEvents": [
+      "onCommand:fuzzySearch.searchContent",
+      "onCommand:fuzzySearch.searchContentSelection",
+      "onCommand:fuzzySearch.searchFiles"
+    ],
+    "configuration": {
+      "title": "Fuzzy search",
+      "properties": {
+        "fuzzySearch.excludeFolders": {
+          "type": "array",
+          "description": "Exclude files or folders",
+          "default": [
+            "node_modules",
+            ".git",
+            ".vscode",
+            "dist",
+            "build"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.92.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0",
+    "eslint": "^8.57.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack": "^5.92.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "fzf": "^0.5.2"
+  }
+}
