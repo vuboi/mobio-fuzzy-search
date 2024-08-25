@@ -57,10 +57,20 @@ const EXTENSION_FILE_TYPE = {
   mkv: "file-media",
   webm: "file-media",
   diff: "diff",
-  patch: "diff",
+  patch: "diff"
 };
 
-export function fileType(file: vscode.Uri): string {
+export function getFileType(file: vscode.Uri): string {
   const extension = (file.toString().substring(file.toString().lastIndexOf(".") + 1) as keyof Object);
   return EXTENSION_FILE_TYPE[extension] ? EXTENSION_FILE_TYPE[extension].toString().toLowerCase() : 'file';
+}
+
+export function getFileExtension(file: vscode.Uri): string {
+  // path.parse(filePath).name
+  return (file.toString().substring(file.toString().lastIndexOf(".") + 1) as keyof Object);
+}
+
+export function getFileName(file: vscode.Uri): string {
+  // path.parse(filePath).name
+  return file.toString().substring(file.toString().lastIndexOf("/") + 1);
 }

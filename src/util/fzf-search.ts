@@ -10,15 +10,17 @@ var recentFilePaths: string[] = [];
 // Search content
 var valueFromPreviousInvocation = '';
 var lastSelected: IQuickItemLine | undefined = undefined;
+let lastRange: vscode.Range | undefined = undefined;
+let listen: vscode.Disposable | undefined = undefined;
 
 export async function fzfSearchFile(): Promise<void> {
-  const searchFile = new SearchFile();
+  const file = new SearchFile();
   const quickPick = vscode.window.createQuickPick<IQuickPickItem>();
   quickPick.placeholder = 'Search files...';
   quickPick.canSelectMany = false;
 
   const getRecentFiles = async (): Promise<string[]> => {
-    recentFilePaths = await (await Promise.all(recentFilePaths.filter(async (filePath) => await searchFile.checkFileExist(filePath))));
+    recentFilePaths = await (await Promise.all(recentFilePaths.filter(async (filePath) => await file.checkFileExist(filePath))));
     return [...new Set(recentFilePaths)];
   };
 
@@ -31,24 +33,28 @@ export async function fzfSearchFile(): Promise<void> {
     const recentItems = await getRecentFiles();
     if (ignoreRecentItem) {
       const itemPaths = [...new Set([...quickItemPaths])].slice(0, 10);
-      return itemPaths.map((filePath) => searchFile.filePathToQuickItem(filePath));
+      return itemPaths.map((filePath) => file.filePathToQuickItem(filePath));
     }
     const itemPaths = [...new Set([...recentItems, ...quickItemPaths])].slice(0, 10);
-    const quickItemSearch = itemPaths.map((filePath) => searchFile.filePathToQuickItem(filePath));
+    const quickItemSearch = itemPaths.map((filePath) => file.filePathToQuickItem(filePath));
     return [separator, ...quickItemSearch];
   };
 
   const fuzzySearch = (search: string, options: Partial<IFzfOptions> = {}) => {
-    searchFile.searchFiles(search, async (quickItemPaths: string[]) => {
+    file.searchFiles(search, async (quickItemPaths: string[]) => {
       quickPick.items = await getQuickPickItems(quickItemPaths, options.ignoreRecentItem || false);
       quickPick.busy = false;
     }, options);
   };
 
-  fuzzySearch('', { max_depth: 1 });
+  fuzzySearch('', { max_depth: 1, ignoreRecentItem: false });
 
   quickPick.onDidChangeValue((search) => {
     quickPick.busy = true;
+    if (search.length === 0) {
+      fuzzySearch(search, { ignoreRecentItem: false });
+      return;
+    }
     fuzzySearch(search, { ignoreRecentItem: true });
   });
 
@@ -70,11 +76,12 @@ export function fzfSearchContent(useCurrentSelection: boolean): void {
     vscode.window.showErrorMessage('No active text editor found.');
     return;
   }
-  const searchContent = new SearchContent();
+  const content = new SearchContent();
   const quickPick = vscode.window.createQuickPick<IQuickItemLine>();
-  const quickPickEntries: IQuickItemLine[] = searchContent.initQuickPickEntries();
+  const quickPickEntries: IQuickItemLine[] = content.initQuickPickEntries();
   quickPick.items = quickPickEntries;
   quickPick.canSelectMany = false;
+  listen?.dispose();
 
   const onGetLastSelected = () => {
     if (lastSelected) {
@@ -85,6 +92,48 @@ export function fzfSearchContent(useCurrentSelection: boolean): void {
     lastSelected && (quickPick.activeItems = [lastSelected]);
   };
 
+  const setDecorations = (position: vscode.Position, reset: boolean = false) => {
+    // const configColorTextDecoration = vscode.workspace.getConfiguration('editor').get('colorDecorators');
+    // if (!vscode.window.activeTextEditor) {
+    //   return;
+    // }
+
+    // const createTexDecoration = (color: string, range: vscode.Range) => {
+    //   vscode.window.activeTextEditor?.setDecorations(
+    //     vscode.window.createTextEditorDecorationType({
+    //       color: color,
+    //       isWholeLine: true
+    //     }), [range]);
+    // };
+
+    // if (reset) {
+    //   // Restore to default color
+    //   lastRange && createTexDecoration('editor.background', lastRange);
+    //   createTexDecoration('editor.background', new vscode.Range(position, position));
+    //   return;
+    // }
+
+    // if (lastRange) {
+    //   createTexDecoration('editor.background', lastRange);
+    // }
+
+    // lastRange = new vscode.Range(position, position);
+    // createTexDecoration('red', lastRange);
+  };
+
+  const onDidChangeTextEditorSelection = () => {
+    listen = vscode.window.onDidChangeTextEditorSelection(() => {
+      if (!vscode.window.activeTextEditor) {
+        return;
+      }
+      const position = vscode.window.activeTextEditor.selection.active;
+      setDecorations(position, true);
+
+      listen?.dispose();
+    });
+  };
+
+
   const onDidChangeActive = (items: any) => {
     if (!items.length) {
       return;
@@ -93,9 +142,12 @@ export function fzfSearchContent(useCurrentSelection: boolean): void {
     if (!vscode.window.activeTextEditor) {
       return;
     }
+
     vscode.window.activeTextEditor.revealRange(
       new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
     vscode.window.activeTextEditor.selection = new vscode.Selection(position, position);
+
+    setDecorations(position);
   };
 
   const onDidChangeValue = () => {
@@ -117,27 +169,30 @@ export function fzfSearchContent(useCurrentSelection: boolean): void {
     quickPick.value = valueFromPreviousInvocation;
     let previewValue = valueFromPreviousInvocation;
     let hasPreviewValue = previewValue.length > 0;
-    quickPick.onDidChangeValue(value => {
+    quickPick.onDidChangeValue(search => {
       if (hasPreviewValue) {
         hasPreviewValue = false;
 
         // Try to figure out what text the user typed. Assumes that the user
         // typed at most one character.
-        for (let i = 0; i < value.length; ++i) {
-          if (previewValue.charAt(i) !== value.charAt(i)) {
-            quickPick.value = value.charAt(i);
-            break;
-          }
-        }
+        content.searchLastContent(search, previewValue, quickPick);
       }
     });
     // Save the search string so we can show it next time fuzzy search is
     // invoked.
-    quickPick.onDidChangeValue(value => valueFromPreviousInvocation = value);
+    quickPick.onDidChangeValue(search => {
+      valueFromPreviousInvocation = search;
+      if (search.length === 0) {
+        quickPick.items = quickPickEntries;
+        return;
+      }
+      quickPick.items = content.searchContent(search, quickPickEntries);
+    });
   };
 
   const onDidChangeSelection = () => {
     lastSelected = quickPick.selectedItems[0];
+    onDidChangeTextEditorSelection();
     quickPick.hide();
   };
 
@@ -160,9 +215,10 @@ export function fzfSearchContent(useCurrentSelection: boolean): void {
   };
 
   onGetLastSelected();
+  // quickPick.onDidHide(onDidChangeTextEditorSelection);
   quickPick.onDidChangeActive(onDidChangeActive);
   quickPick.onDidChangeSelection(onDidChangeSelection);
   onDidChangeValue();
   onDidHide();
   quickPick.show();
-}
+};

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { IFzfCallbackResult, IFzfOptions } from './interfaces/fzf.interface';
 import { exec } from 'child_process';
+import { getConfig } from './config';
 
 export default class Fzf {
   constructor() { }
@@ -44,8 +45,7 @@ export default class Fzf {
     const fdPath = this.getFdPath();
     const fzfPath = this.getFzfPath();
     const { max_depth } = options || {};
-    const config = vscode.workspace.getConfiguration('fuzzySearch');
-    const excludeFolders: string[] = config.get('excludeFolders') || [];
+    const excludeFolders: string[] = getConfig('excludeFolders') || [];
 
     if (max_depth) {
       return `${fdPath} --type f --hidden --follow --exclude .git --exclude node_modules --max-depth ${max_depth} . ${pathSpace || ''} | ${fzfPath} --tiebreak=end -m -f '${_search}'\n`;

@@ -2,7 +2,7 @@
   "name": "mobio-fuzzy-search",
   "displayName": "Mobio Fuzzy Search",
   "description": "Fuzzy search extension for Visual Studio Code",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "images/mobio.png",
   "author": "Mobio",
   "license": "MIT",
@@ -75,7 +75,21 @@
             ".vscode",
             "dist",
             "build"
-          ]
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "fuzzySearch.excludeExtensions": {
+          "type": "array",
+          "description": "Exclude extensions by id",
+          "default": [
+            "vscode",
+            "vscode-insider"
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
@@ -104,5 +118,8 @@
     "typescript": "^5.4.5",
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "fast-fuzzy": "^1.12.0"
   }
 }

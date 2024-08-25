@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { IQuickItemLine } from './interfaces/fzf.interface';
+import { search as fuzzySearch } from 'fast-fuzzy';
 
 export default class SearchContent {
   constructor() { }
@@ -8,12 +9,19 @@ export default class SearchContent {
     return '0'.repeat(length - str.length) + str;
   }
 
-  public searchContent(search: string, previewValue: string): string | undefined {
+  public searchLastContent(search: string, previewValue: string, quickPick: vscode.QuickPick<IQuickItemLine>): void {
     for (let i = 0; i < search.length; ++i) {
       if (previewValue.charAt(i) !== search.charAt(i)) {
-        return search.charAt(i);
+        quickPick.value = search.charAt(i);
+        break;
       }
     }
+  }
+
+  public searchContent(search: string, quickPickItem: IQuickItemLine[]): IQuickItemLine[] {
+    const result = fuzzySearch(search, quickPickItem, { returnMatchData: true, keySelector: (s: IQuickItemLine) => s.label });
+
+    return result.map((item) => item.item);
   }
 
   public initQuickPickEntries(): IQuickItemLine[] {

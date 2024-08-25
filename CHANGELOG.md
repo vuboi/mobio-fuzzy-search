@@ -1,12 +1,13 @@
 # Change Log
+## [v0.0.1]
+- Initial release.
 
-All notable changes to the "fuzzy-search" extension will be documented in this file.
+## [v0.0.2]
+- Add icon by icon themes.
+- Change ui config setting.
+- Add fuzzy search content.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
-
-- Initial release
-
-## [TODO]
-- Add options for fzf search
+## [Todo]
+- Add highlight search content (pending...).
+- Search function in content.
+- Merge extension https://github.com/jrieken/fuzzy-definitions
