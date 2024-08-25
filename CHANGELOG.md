@@ -7,6 +7,9 @@
 - Change ui config setting.
 - Add fuzzy search content.
 
+## [v0.0.3]
+- Fix file seems to be binary and cannot be opened as text.
+
 ## [Todo]
 - Add highlight search content (pending...).
 - Search function in content.

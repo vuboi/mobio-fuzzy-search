@@ -2,7 +2,7 @@
   "name": "mobio-fuzzy-search",
   "displayName": "Mobio Fuzzy Search",
   "description": "Fuzzy search extension for Visual Studio Code",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "icon": "images/mobio.png",
   "author": "Mobio",
   "license": "MIT",
