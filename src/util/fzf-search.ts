@@ -58,13 +58,10 @@ export async function fzfSearchFile(): Promise<void> {
     fuzzySearch(search, { ignoreRecentItem: true });
   });
 
-  quickPick.onDidChangeSelection(() => {
+  quickPick.onDidChangeSelection(async () => {
     const fileSelected = quickPick.selectedItems[0].filePath;
     recentFilePaths = [fileSelected, ...recentFilePaths].slice(0, 3);
-    vscode.workspace.openTextDocument(fileSelected).then((doc) => {
-      vscode.window.showTextDocument(doc);
-    });
-
+    await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fileSelected));
     quickPick.hide();
   });
 
